@@ -4,30 +4,61 @@
 
 <h1 align="center">Sheetlux CD</h1>
 
-<p align="center"><b>GitOps delivery for the spreadsheet cluster</b><br>
-A <a href="https://sncfoundation.github.io">Sheet-Native Computing Foundation</a> project &#183; analog of <b>Argo CD</b></p>
+<p align="center"><b>GitOps for the spreadsheet cluster — our Argo CD.</b><br>
+A <a href="https://sncfoundation.github.io">Sheet-Native Computing Foundation</a> project · analog of <b>Argo CD</b> / <b>Flux</b></p>
 
 ---
 
-**Status:** 💾 Autosaving &#183; this project is a proposal. Design notes and contributions are welcome.
+**Status:** 💾 Autosaving · a real, working component extracted from Sheeternetes.
 
-## About
+## What it does
 
-GitOps delivery for the spreadsheet cluster Part of the spreadsheet-native stack — the Sheet stays the source of truth, and it reconciles.
+Sheetlux CD continuously reconciles a **directory of manifests** into a Sheeternetes cluster.
+The declared state in Git is the source of truth: it pulls the repo, checksums the manifests,
+and runs `skctl apply` on every change. Because `apply` is an idempotent upsert, the cluster
+converges to Git — exactly like Argo CD or Flux, just smaller, funnier, and backed by a
+spreadsheet.
 
-## Get involved
+## Requirements
 
-- 📋 Tracking issue &amp; design: [sncfoundation/sheeternetes#32](https://github.com/sncfoundation/sheeternetes/issues/32)
-- 🗺️ [SNCF Landscape](https://sncfoundation.github.io/landscape.html)
-- 🧩 [All projects](https://sncfoundation.github.io/projects.html)
-- ⚖️ [Governance &amp; how to contribute](https://github.com/sncfoundation/governance)
-- 🎓 [Get certified (CSFE)](https://sncfoundation.github.io/certification.html)
+- A running Sheeternetes cluster and **`skctl`** on your `PATH`
+  (from [sncfoundation/sheeternetes](https://github.com/sncfoundation/sheeternetes)).
+- `bash`, `git`, `shasum`.
 
-## Status legend
+## Usage
 
-Everything starts as an **Unsaved Draft**. It reconciles up the tiers from there — see the
-[maturity model](https://sncfoundation.github.io/foundation.html#maturity).
+```bash
+# reconcile ./gitops every 15s (Ctrl-C to stop)
+./sheetlux
+
+# a different directory / interval / skctl path
+INTERVAL=30 ./sheetlux ~/my-manifests
+SKCTL=/path/to/skctl ./sheetlux ./gitops
+```
+
+Point it at a Git working tree and it will `git pull --ff-only` before each sync, so a push to
+your manifests repo rolls out to the cluster automatically. GitOps, spreadsheet-native.
+
+## Example
+
+`gitops/app.json`:
+
+```json
+{ "kind": "Deployment", "name": "hello", "image": "nginxdemos/hello", "replicas": 2, "cpu": 100, "memory": 64 }
+```
+
+Run `./sheetlux` and the `hello` Deployment converges to 2 replicas. Edit the file, and the
+change is applied on the next tick. Delete a field, and it reconciles. It reconciles.
+
+## Roadmap
+
+- Prune (delete resources removed from Git).
+- Health/sync status written back to a `Sheetlux` tab.
+- Multi-source and per-directory apps.
+
+Tracking & design: [sncfoundation/sheeternetes#32](https://github.com/sncfoundation/sheeternetes/issues/32) ·
+[SNCF Landscape](https://sncfoundation.github.io/landscape.html)
 
 ---
 
-<sub>Licensed under Apache-2.0. The SNCF does not recommend running production on a spreadsheet. If you do, please film it.</sub>
+<sub>Licensed under Apache-2.0. Do not run production on a spreadsheet. If you do, please film it.</sub>
